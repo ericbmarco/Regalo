@@ -15,6 +15,7 @@ let draggedElement = null;
 let touchStartX = null;
 let touchStartY = null;
 let placeholder = null;
+let touchStartTime = 0;
 
 // Cargar imágenes de forma aleatoria
 shuffledDates.forEach((date) => {
@@ -26,9 +27,15 @@ shuffledDates.forEach((date) => {
     img.dataset.date = date;
     gameContainer.appendChild(img);
 
-    // Mostrar modal al hacer clic o tocar la imagen
+    // Mostrar modal al hacer clic o tocar la imagen (configurado más adelante para tap rápido)
     img.addEventListener("click", () => showImageModal(img, date));
-    img.addEventListener("touchend", () => showImageModal(img, date));
+    img.addEventListener("touchstart", (e) => touchStartTime = Date.now());
+    img.addEventListener("touchend", (e) => {
+        const elapsedTime = Date.now() - touchStartTime;
+        if (elapsedTime < 200 && !draggedElement) { // Si es un tap rápido y no está arrastrando
+            showImageModal(img, date);
+        }
+    });
 });
 
 // Función para mostrar el modal con la imagen
@@ -77,11 +84,22 @@ gameContainer.addEventListener("touchmove", (e) => {
             (el) => el !== draggedElement && el !== placeholder
         );
 
+        let inserted = false;
         for (let el of elements) {
             const rect = el.getBoundingClientRect();
             if (touch.clientY > rect.top && touch.clientY < rect.bottom) {
                 gameContainer.insertBefore(placeholder, el.nextSibling);
+                inserted = true;
                 break;
+            }
+        }
+
+        // Si no está dentro de otro elemento, mover al final o al principio
+        if (!inserted) {
+            if (touch.clientY < gameContainer.firstElementChild.getBoundingClientRect().top) {
+                gameContainer.insertBefore(placeholder, gameContainer.firstChild);
+            } else if (touch.clientY > gameContainer.lastElementChild.getBoundingClientRect().bottom) {
+                gameContainer.appendChild(placeholder);
             }
         }
     }

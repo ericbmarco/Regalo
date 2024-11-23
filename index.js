@@ -11,31 +11,40 @@ const imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
 const successAudio = new Audio("crisTerie.mp3"); // Ruta al archivo MP3
 const errorAudio = new Audio("crisTerie.mp3"); // Ruta al archivo MP3
 
-let draggedElement = null;
-let touchStartX = null;
-let touchStartY = null;
-let placeholder = null;
-let touchStartTime = 0;
-
 // Cargar imágenes de forma aleatoria
 shuffledDates.forEach((date) => {
+    const imageWrapper = document.createElement("div");
+    imageWrapper.classList.add("image-wrapper");
+    imageWrapper.dataset.date = date;
+
     const img = document.createElement("img");
     img.src = `${date}.jpg`; // Cambia a la ruta donde guardes tus imágenes
     img.alt = `Imagen con fecha ${date}`;
     img.classList.add("draggable");
-    img.draggable = true;
     img.dataset.date = date;
-    gameContainer.appendChild(img);
 
-    // Mostrar modal al hacer clic o tocar la imagen (configurado más adelante para tap rápido)
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.classList.add("buttons-container");
+
+    const moveLeftButton = document.createElement("button");
+    moveLeftButton.textContent = "◀";
+    moveLeftButton.classList.add("move-button", "move-left");
+    moveLeftButton.addEventListener("click", () => moveImage(imageWrapper, -1));
+
+    const moveRightButton = document.createElement("button");
+    moveRightButton.textContent = "▶";
+    moveRightButton.classList.add("move-button", "move-right");
+    moveRightButton.addEventListener("click", () => moveImage(imageWrapper, 1));
+
+    buttonsContainer.appendChild(moveLeftButton);
+    buttonsContainer.appendChild(moveRightButton);
+
+    // Mostrar modal al hacer clic en la imagen
     img.addEventListener("click", () => showImageModal(img, date));
-    img.addEventListener("touchstart", (e) => touchStartTime = Date.now());
-    img.addEventListener("touchend", (e) => {
-        const elapsedTime = Date.now() - touchStartTime;
-        if (elapsedTime < 200 && !draggedElement) { // Si es un tap rápido y no está arrastrando
-            showImageModal(img, date);
-        }
-    });
+
+    imageWrapper.appendChild(img);
+    imageWrapper.appendChild(buttonsContainer);
+    gameContainer.appendChild(imageWrapper);
 });
 
 // Función para mostrar el modal con la imagen
@@ -55,105 +64,25 @@ function revealText(e) {
     e.target.classList.add("revealed");
 }
 
-// Eventos táctiles para drag-and-drop
-gameContainer.addEventListener("touchstart", (e) => {
-    const target = e.target;
-    if (target.classList.contains("draggable")) {
-        draggedElement = target;
-        placeholder = document.createElement("div");
-        placeholder.classList.add("placeholder");
-        placeholder.style.height = `${draggedElement.offsetHeight}px`;
-        gameContainer.insertBefore(placeholder, draggedElement.nextSibling);
+// Función para mover imágenes
+function moveImage(imageWrapper, direction) {
+    const parent = gameContainer;
+    const children = Array.from(parent.children);
+    const currentIndex = children.indexOf(imageWrapper);
 
-        const rect = target.getBoundingClientRect();
-        touchStartX = e.touches[0].clientX - rect.left;
-        touchStartY = e.touches[0].clientY - rect.top;
-        target.style.position = "absolute";
-        target.style.zIndex = "1000";
+    if (direction === -1 && currentIndex > 0) {
+        // Mover a la izquierda
+        parent.insertBefore(imageWrapper, children[currentIndex - 1]);
+    } else if (direction === 1 && currentIndex < children.length - 1) {
+        // Mover a la derecha
+        parent.insertBefore(imageWrapper, children[currentIndex + 2]);
     }
-});
-
-gameContainer.addEventListener("touchmove", (e) => {
-    if (draggedElement) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        draggedElement.style.left = `${touch.clientX - touchStartX}px`;
-        draggedElement.style.top = `${touch.clientY - touchStartY}px`;
-
-        const elements = Array.from(gameContainer.children).filter(
-            (el) => el !== draggedElement && el !== placeholder
-        );
-
-        let inserted = false;
-        for (let el of elements) {
-            const rect = el.getBoundingClientRect();
-            if (touch.clientY > rect.top && touch.clientY < rect.bottom) {
-                gameContainer.insertBefore(placeholder, el.nextSibling);
-                inserted = true;
-                break;
-            }
-        }
-
-        // Si no está dentro de otro elemento, mover al final o al principio
-        if (!inserted) {
-            if (touch.clientY < gameContainer.firstElementChild.getBoundingClientRect().top) {
-                gameContainer.insertBefore(placeholder, gameContainer.firstChild);
-            } else if (touch.clientY > gameContainer.lastElementChild.getBoundingClientRect().bottom) {
-                gameContainer.appendChild(placeholder);
-            }
-        }
-    }
-});
-
-gameContainer.addEventListener("touchend", (e) => {
-    if (draggedElement) {
-        draggedElement.style.position = "static";
-        draggedElement.style.zIndex = "0";
-        gameContainer.insertBefore(draggedElement, placeholder);
-        placeholder.remove();
-        placeholder = null;
-        draggedElement = null;
-    }
-});
-
-// Eventos drag-and-drop para mouse
-document.addEventListener("dragstart", (e) => {
-    if (e.target.classList.contains("draggable")) {
-        draggedElement = e.target;
-        setTimeout(() => (draggedElement.style.display = "none"), 0);
-    }
-});
-
-document.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    if (e.target.classList.contains("draggable")) {
-        currentTarget = e.target;
-    }
-});
-
-document.addEventListener("drop", (e) => {
-    e.preventDefault();
-    draggedElement.style.display = "block";
-    if (currentTarget) {
-        const parent = gameContainer;
-        const elements = Array.from(parent.children);
-        const draggedIndex = elements.indexOf(draggedElement);
-        const targetIndex = elements.indexOf(currentTarget);
-
-        if (draggedIndex > targetIndex) {
-            parent.insertBefore(draggedElement, currentTarget);
-        } else {
-            parent.insertBefore(draggedElement, currentTarget.nextSibling);
-        }
-    }
-    draggedElement = null;
-    currentTarget = null;
-});
+}
 
 // Verificar el orden
 checkOrderButton.addEventListener("click", () => {
     const currentOrder = Array.from(gameContainer.children).map(
-        (img) => img.dataset.date
+        (imgWrapper) => imgWrapper.dataset.date
     );
 
     if (JSON.stringify(currentOrder) === JSON.stringify(dates)) {

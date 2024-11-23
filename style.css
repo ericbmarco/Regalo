@@ -1,0 +1,66 @@
+body {
+    background-image: url('img/flow2.jpg'); /* Cambia la ruta a tu imagen */
+    background-size: auto; /* Asegura que la imagen cubra toda la pantalla */
+    background-repeat: no-repeat; /* Evita que la imagen se repita */
+    background-position: center; /* Centra la imagen */
+    background-attachment: fixed; /* Hace que el fondo no se mueva al hacer scroll */
+}
+
+/* Fondo con gradiente */
+.bg-gradient {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+}
+
+/* Imagenes del juego */
+.draggable {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    transition: transform 0.2s;
+}
+
+.draggable:active {
+    transform: scale(1.1);
+    cursor: grabbing;
+}
+
+/* Texto censurado inicialmente */
+#modalImageText {
+    display: block;
+    background-color: black;
+    color: black;
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    position: relative;
+}
+
+/* Texto censurado - Mensaje */
+#modalImageText::after {
+    content: "Clica para quitar censura";
+    position: absolute;
+    top: 100%; /* Debajo del texto principal */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: gray;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Texto revelado */
+#modalImageText.revealed {
+    color: gray;
+    background-color: transparent;
+}
+
+/* Ocultar mensaje al revelar */
+#modalImageText.revealed::after {
+    opacity: 0;
+}

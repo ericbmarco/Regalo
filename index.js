@@ -13,7 +13,7 @@ const imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
 // Cargar imágenes de forma aleatoria
 shuffledDates.forEach((date) => {
     const img = document.createElement("img");
-    img.src = `img/${date}.jpg`; // Cambia a la ruta donde guardes tus imágenes
+    img.src = `${date}.jpg`; // Cambia a la ruta donde guardes tus imágenes
     img.alt = `Imagen con fecha ${date}`;
     img.classList.add("draggable");
     img.draggable = true;
@@ -73,8 +73,8 @@ document.addEventListener("drop", (e) => {
 });
 
 // Crear referencia al audio
-const successAudio = new Audio("audio/crisTerie.mp3"); // Cambia la ruta al archivo MP3
-const errorAudio = new Audio("audio/crisTerie.mp3"); // Cambia la ruta al archivo MP3
+const successAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
+const errorAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
 
 // Verificar el orden
 checkOrderButton.addEventListener("click", () => {

@@ -64,3 +64,23 @@ body {
 #modalImageText.revealed::after {
     opacity: 0;
 }
+
+
+.move-button {
+    background-color: #2cad06;
+    color: white;
+    border: none;
+    padding: 2px 3px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    margin: 0 2px; /* Agrega una separación horizontal entre los botones */
+}
+
+.move-button:hover {
+    background-color: #0056b3;
+}
+
+.move-button:active {
+    background-color: #003f7f;
+}

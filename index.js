@@ -3,12 +3,19 @@ const dates = [
     "20241023", "20241029", "20241101", "20241102", "20241104", "20241112", 
     "20241113", "20241114", "20241119"
 ];
-// const dates = ['202410081'];
 const shuffledDates = [...dates].sort(() => Math.random() - 0.5);
 
 const gameContainer = document.getElementById("game");
 const checkOrderButton = document.getElementById("check-order");
 const imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
+
+// Crear referencia al audio
+const successAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
+const errorAudio = new Audio("errorSound.mp3"); // Cambia la ruta al archivo MP3
+
+let draggedElement = null;
+let touchStartX = null;
+let touchStartY = null;
 
 // Cargar imágenes de forma aleatoria
 shuffledDates.forEach((date) => {
@@ -20,25 +27,57 @@ shuffledDates.forEach((date) => {
     img.dataset.date = date;
     gameContainer.appendChild(img);
 
-    // Mostrar modal al hacer clic en la imagen
-    img.addEventListener("click", () => {
-        const modalImageText = document.getElementById("modalImageText");
-        document.getElementById("modalImage").src = img.src;
-        modalImageText.textContent = `Fecha: ${date}`; // Asignamos la fecha
-        modalImageText.classList.remove("revealed"); // Aseguramos que comience censurado
-        imageModal.show();
-    });
+    // Mostrar modal al hacer clic o tocar la imagen
+    img.addEventListener("click", () => showImageModal(img, date));
+    img.addEventListener("touchend", () => showImageModal(img, date));
 });
 
-// Revelar la fecha al hacer clic en el texto
-document.getElementById("modalImageText").addEventListener("click", (e) => {
-    e.target.classList.add("revealed"); // Revela el texto al hacer clic
+// Función para mostrar el modal con la imagen
+function showImageModal(img, date) {
+    const modalImageText = document.getElementById("modalImageText");
+    document.getElementById("modalImage").src = img.src;
+    modalImageText.textContent = `Fecha: ${date}`; // Asignamos la fecha
+    modalImageText.classList.remove("revealed"); // Aseguramos que comience censurado
+    imageModal.show();
+}
+
+// Revelar la fecha al hacer clic o tocar el texto
+document.getElementById("modalImageText").addEventListener("click", revealText);
+document.getElementById("modalImageText").addEventListener("touchend", revealText);
+
+function revealText(e) {
+    e.target.classList.add("revealed"); // Revela el texto al hacer clic o tocar
+}
+
+// Drag & Drop y soporte táctil
+gameContainer.addEventListener("touchstart", (e) => {
+    const target = e.target;
+    if (target.classList.contains("draggable")) {
+        draggedElement = target;
+        const rect = target.getBoundingClientRect();
+        touchStartX = e.touches[0].clientX - rect.left;
+        touchStartY = e.touches[0].clientY - rect.top;
+    }
 });
 
-// Drag & Drop funcionalidad
-let draggedElement = null;
-let currentTarget = null;
+gameContainer.addEventListener("touchmove", (e) => {
+    if (draggedElement) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        draggedElement.style.position = "absolute";
+        draggedElement.style.left = `${touch.clientX - touchStartX}px`;
+        draggedElement.style.top = `${touch.clientY - touchStartY}px`;
+    }
+});
 
+gameContainer.addEventListener("touchend", (e) => {
+    if (draggedElement) {
+        draggedElement.style.position = "static";
+        draggedElement = null;
+    }
+});
+
+// Drag & Drop funcionalidad con mouse
 document.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("draggable")) {
         draggedElement = e.target;
@@ -72,10 +111,6 @@ document.addEventListener("drop", (e) => {
     currentTarget = null;
 });
 
-// Crear referencia al audio
-const successAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
-const errorAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
-
 // Verificar el orden
 checkOrderButton.addEventListener("click", () => {
     const currentOrder = Array.from(gameContainer.children).map(
@@ -94,8 +129,8 @@ checkOrderButton.addEventListener("click", () => {
         const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
         errorModal.show();
 
-        // Reproducir la canción
-        successAudio.currentTime = 0; // Asegúrate de que comience desde el inicio
-        successAudio.play();
+        // Reproducir el sonido de error
+        errorAudio.currentTime = 0; // Asegúrate de que comience desde el inicio
+        errorAudio.play();
     }
 });

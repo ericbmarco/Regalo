@@ -8,14 +8,13 @@ const shuffledDates = [...dates].sort(() => Math.random() - 0.5);
 const gameContainer = document.getElementById("game");
 const checkOrderButton = document.getElementById("check-order");
 const imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
-
-// Crear referencia al audio
-const successAudio = new Audio("crisTerie.mp3"); // Cambia la ruta al archivo MP3
-const errorAudio = new Audio("errorSound.mp3"); // Cambia la ruta al archivo MP3
+const successAudio = new Audio("crisTerie.mp3"); // Ruta al archivo MP3
+const errorAudio = new Audio("crisTerie.mp3"); // Ruta al archivo MP3
 
 let draggedElement = null;
 let touchStartX = null;
 let touchStartY = null;
+let placeholder = null;
 
 // Cargar imágenes de forma aleatoria
 shuffledDates.forEach((date) => {
@@ -36,7 +35,7 @@ shuffledDates.forEach((date) => {
 function showImageModal(img, date) {
     const modalImageText = document.getElementById("modalImageText");
     document.getElementById("modalImage").src = img.src;
-    modalImageText.textContent = `Fecha: ${date}`; // Asignamos la fecha
+    modalImageText.textContent = `Fecha: ${date}`;
     modalImageText.classList.remove("revealed"); // Aseguramos que comience censurado
     imageModal.show();
 }
@@ -46,17 +45,24 @@ document.getElementById("modalImageText").addEventListener("click", revealText);
 document.getElementById("modalImageText").addEventListener("touchend", revealText);
 
 function revealText(e) {
-    e.target.classList.add("revealed"); // Revela el texto al hacer clic o tocar
+    e.target.classList.add("revealed");
 }
 
-// Drag & Drop y soporte táctil
+// Eventos táctiles para drag-and-drop
 gameContainer.addEventListener("touchstart", (e) => {
     const target = e.target;
     if (target.classList.contains("draggable")) {
         draggedElement = target;
+        placeholder = document.createElement("div");
+        placeholder.classList.add("placeholder");
+        placeholder.style.height = `${draggedElement.offsetHeight}px`;
+        gameContainer.insertBefore(placeholder, draggedElement.nextSibling);
+
         const rect = target.getBoundingClientRect();
         touchStartX = e.touches[0].clientX - rect.left;
         touchStartY = e.touches[0].clientY - rect.top;
+        target.style.position = "absolute";
+        target.style.zIndex = "1000";
     }
 });
 
@@ -64,24 +70,39 @@ gameContainer.addEventListener("touchmove", (e) => {
     if (draggedElement) {
         e.preventDefault();
         const touch = e.touches[0];
-        draggedElement.style.position = "absolute";
         draggedElement.style.left = `${touch.clientX - touchStartX}px`;
         draggedElement.style.top = `${touch.clientY - touchStartY}px`;
+
+        const elements = Array.from(gameContainer.children).filter(
+            (el) => el !== draggedElement && el !== placeholder
+        );
+
+        for (let el of elements) {
+            const rect = el.getBoundingClientRect();
+            if (touch.clientY > rect.top && touch.clientY < rect.bottom) {
+                gameContainer.insertBefore(placeholder, el.nextSibling);
+                break;
+            }
+        }
     }
 });
 
 gameContainer.addEventListener("touchend", (e) => {
     if (draggedElement) {
         draggedElement.style.position = "static";
+        draggedElement.style.zIndex = "0";
+        gameContainer.insertBefore(draggedElement, placeholder);
+        placeholder.remove();
+        placeholder = null;
         draggedElement = null;
     }
 });
 
-// Drag & Drop funcionalidad con mouse
+// Eventos drag-and-drop para mouse
 document.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("draggable")) {
         draggedElement = e.target;
-        setTimeout(() => (draggedElement.style.display = "none"), 0); // Esconde temporalmente el elemento
+        setTimeout(() => (draggedElement.style.display = "none"), 0);
     }
 });
 
@@ -120,17 +141,12 @@ checkOrderButton.addEventListener("click", () => {
     if (JSON.stringify(currentOrder) === JSON.stringify(dates)) {
         const successModal = new bootstrap.Modal(document.getElementById("successModal"));
         successModal.show();
-
-        // Reproducir la canción
-        successAudio.currentTime = 0; // Asegúrate de que comience desde el inicio
+        successAudio.currentTime = 0;
         successAudio.play();
-
     } else {
         const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
         errorModal.show();
-
-        // Reproducir el sonido de error
-        errorAudio.currentTime = 0; // Asegúrate de que comience desde el inicio
+        errorAudio.currentTime = 0;
         errorAudio.play();
     }
 });
